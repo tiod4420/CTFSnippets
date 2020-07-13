@@ -1,0 +1,80 @@
+Netcat (Listen UDP)
+	-> nc -l -u localhost 1337 # NOK
+	-> nc -l -u 127.0.0.1 1337 # OK
+
+LD_PRELOAD and setuid programs
+	LD_PRELOAD is discarded if setuid when executing
+	gcc -m32 -shared -fPIC <FAKE LIB>.c -o <FAKE_LIB>.so -ldl
+
+Inject a fake library into a seteuid programs without the seteuid (run as current user)
+	use strace, gdb to run it so it discards the seteuid, and run as real user, so LD_PRELOAD is kept
+
+lea x(,reg1,offset), reg2  ==> reg2 = reg1 * offset + x
+
+Shellcode oneliner
+	objdump -d shellcode | grep '[0-9a-f]:' | grep  -v 'file' | cut -f2 -d: | cut -f1-6 -d' ' | tr -s ' ' | tr '\t' ' ' | sed 's/ $//g' | sed 's/ /\\x/g' | paste -d '' -s | sed 's/^/"/' | sed 's/$/"/g'
+
+GDB trace child/execve
+	set follow-fork-mode child
+	or
+	set follow-exec-mode new
+		info inferior (to get the list)
+		inferior #inf (to switch back)
+
+Assembly comparison
+	test X, X  => X & X == 0 if and only if X == 0 (X == 0 => ZF = 0)
+	jne        => jump if ZF == 0
+
+	test eax, eax <=> cmp eax, 0
+
+glibc version
+	getconf GNU_LIBC_VERSION
+
+gdb sections
+	maintenance info sections
+
+ld.so if glibc < 2.23
+	LD_POINTER_GUARD=0 (unset randomization of pointers for setjmp)
+
+Linux execve
+	program (ELF) or script with shebang
+
+File Stream overload
+	_vtable_offset -> lea 0x94($esi, $eax, 1) with esi=base of FILE, eax=_vtable_offset, 0x94=sizeof(FILE)
+	=> ie vtable is directly after FILE if no offset
+
+	=> take care of magic number as it contains flags (for vfprintf 0xfbad2185 is working)
+	=> take care of lock address, as it can change from different systems
+
+Check for NX bit set
+	readelf -a <filepath> | grep GNU_STACK
+		check if RWE
+
+setreuid and families is per thread, not per process
+PLT/GOT is per process, not per thread
+
+mprotect(0xffff0000, 0x0000ffff, 0x00000007); // Set stack executable, will return -1 but still executed
+
+program name is copied by the kernel on the stack, can be found on high addresses (around 0xffffd000)
+
+%hn write short int (2 bytes only)
+
+It seems that for libc-2.19.so, strchr is not really used, but instead SSE2 version is put in PLT
+the SSE2 version does not appears in the symbols of ELF though...
+source code of the function at: 
++ glibc/sysdeps/i386/i686/multiarch/strchr-sse2-bsf.S
+
+Debug file descriptor
+	cat /proc/$PID/fdinfo/$FDNO
+	
+system(x) is okay even if x is not totally valid
+	system(0xdeadbeef . "; command #) can work
+
+Steganography
+	outguess: steganography tool
+	steghide: steganography tool
+	jphide/jpseek: steganography tool (Beware: Linux version and Windows version are differents)
+	stegdetect: staganalysis tool (stegbreak has SEGFAULT...)
+
+gcc 8 (no PIC)
+	gcc -m32 -no-pie -fno-pic -o ...
